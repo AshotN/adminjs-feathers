@@ -4,9 +4,19 @@
 	"module": "true",
 	"homepage": "https://github.com/AshotN/adminjs-feathers",
 	"description": "An adapter to connect AdminJS to FeathersJS",
+	"license": "MIT",
+	"main": "dist/index",
+	"types": "dist/index",
+	"files": [
+		"/dist"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/AshotN/adminjs-feathers"
+	},
 	"packageManager": "yarn@3.3.0",
 	"scripts": {
-		"clean": "rimraf lib",
+		"clean": "rimraf dist",
 		"build": "yarn clean && tsc"
 	},
 	"author": {
