@@ -198,7 +198,7 @@ export class Resource extends BaseResource {
 			const param = flat.get(preparedParams, property.path())
 			const key = property.path()
 
-			if (param === undefined) {
+			if (param === undefined || param === null) {
 				return
 			}
 
@@ -217,19 +217,15 @@ export class Resource extends BaseResource {
 			}
 
 			if (type === 'reference') {
-				if (param === null) {
-					preparedParams[property.column.propertyName] = null
-				} else {
-					const [ref, foreignKey] =
-						property.column.propertyPath.split('.')
-					const id =
-						property.column.type === Number ? Number(param) : param
-					preparedParams[ref] = foreignKey
-						? {
-								[foreignKey]: id,
-						  }
-						: id
-				}
+				const [ref, foreignKey] =
+					property.column.propertyPath.split('.')
+				const id =
+					property.column.type === Number ? Number(param) : param
+				preparedParams[ref] = foreignKey
+					? {
+							[foreignKey]: id,
+					  }
+					: id
 			}
 		})
 
