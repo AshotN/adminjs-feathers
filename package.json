@@ -6,7 +6,7 @@
 	"description": "An adapter to connect AdminJS to FeathersJS",
 	"license": "MIT",
 	"main": "dist/index",
-	"types": "dist/index",
+	"types": "src/index",
 	"files": [
 		"/dist",
 	  	"/src"
