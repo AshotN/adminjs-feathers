@@ -1,6 +1,6 @@
 {
 	"name": "adminjs-feathers",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"module": "true",
 	"homepage": "https://github.com/AshotN/adminjs-feathers",
 	"description": "An adapter to connect AdminJS to FeathersJS",
@@ -18,7 +18,8 @@
 	"packageManager": "yarn@3.3.0",
 	"scripts": {
 		"clean": "rimraf dist",
-		"build": "yarn clean && tsc"
+		"build": "yarn clean && tsc",
+	  	"publish": "yarn build && npm publish"
 	},
 	"author": {
 		"name": "Ashot Nazaryan",
