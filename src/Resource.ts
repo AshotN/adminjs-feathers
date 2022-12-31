@@ -6,6 +6,7 @@ import {
 	Filter,
 	flat,
 	NotFoundError,
+	ValidationError,
 } from 'adminjs'
 
 import { Property } from './Property'
@@ -13,6 +14,8 @@ import { TObject } from '@feathersjs/typebox'
 import { convertFilters } from './utils/featherFilter'
 import { prepareForSend } from './utils/featherParse'
 import { SupportedDatabasesType } from 'adminjs/src/backend/adapters/resource/supported-databases.type'
+import { BadRequest } from '@feathersjs/errors'
+import { parseValidationError } from './utils/parseValidationError'
 
 type ParamsType = Record<string, any>
 
@@ -67,7 +70,7 @@ export class Resource extends BaseResource {
 		const count = await this.service.find({
 			query: { $limit: 0, ...featherFilter },
 			provider: 'adminJS',
-			...currentAdmin?.feathers,
+			...(currentAdmin?.feathers ?? { authenticated: true }),
 		})
 		this.idName()
 		return count.total
@@ -97,7 +100,7 @@ export class Resource extends BaseResource {
 				...featherSort,
 			},
 			provider: 'adminJS',
-			...currentAdmin?.feathers,
+			...(currentAdmin?.feathers ?? { authenticated: true }),
 		})
 
 		return instances.data.map((instance: any) => {
@@ -111,7 +114,7 @@ export class Resource extends BaseResource {
 	): Promise<BaseRecord | null> {
 		const instance = await this.service.get(id, {
 			provider: 'adminJS',
-			...currentAdmin?.feathers,
+			...(currentAdmin?.feathers ?? { authenticated: true }),
 		})
 		return new BaseRecord(instance, this)
 	}
@@ -122,7 +125,7 @@ export class Resource extends BaseResource {
 	): Promise<Array<BaseRecord>> {
 		const instances = await this.service.find(ids, {
 			provider: 'adminJS',
-			...currentAdmin?.feathers,
+			...(currentAdmin?.feathers ?? { authenticated: true }),
 		})
 		return instances.data.map(
 			(instance: any) => new BaseRecord(instance, this)
@@ -135,10 +138,17 @@ export class Resource extends BaseResource {
 	): Promise<ParamsType> {
 		const createData = prepareForSend(params, this.schema)
 
-		return this.service.create(createData, {
-			provider: 'adminJS',
-			...currentAdmin?.feathers,
-		})
+		return this.service
+			.create(createData, {
+				provider: 'adminJS',
+				...(currentAdmin?.feathers ?? { authenticated: true }),
+			})
+			.catch((e: unknown) => {
+				if (e instanceof BadRequest) {
+					throw new ValidationError(parseValidationError(e))
+				}
+				throw e
+			})
 	}
 
 	public async update(
@@ -169,11 +179,14 @@ export class Resource extends BaseResource {
 			return acc
 		}, {} as Record<string, any>)
 
-		if (Object.keys(changes).length > 0)
-			await this.service.patch(pk, changes, {
-				provider: 'adminJS',
-				...currentAdmin?.feathers,
+		if (Object.keys(changes).length > 0) {
+			await this.service.patch(pk, changes).catch((e: unknown) => {
+				if (e instanceof BadRequest) {
+					throw new ValidationError(parseValidationError(e))
+				}
+				throw e
 			})
+		}
 		return preparedParams
 	}
 
@@ -185,7 +198,10 @@ export class Resource extends BaseResource {
 		if (!item)
 			throw new NotFoundError('Failed to find item to delete', 'delete')
 		await this.service
-			.remove(pk, { provider: 'adminJS', ...currentAdmin?.feathers })
+			.remove(pk, {
+				provider: 'adminJS',
+				...(currentAdmin?.feathers ?? { authenticated: true }),
+			})
 			.catch(() => {
 				throw new AppError('Failed to delete: ' + pk)
 			})

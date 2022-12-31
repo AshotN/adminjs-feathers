@@ -1,6 +1,6 @@
 {
 	"name": "adminjs-feathers",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"module": "true",
 	"homepage": "https://github.com/AshotN/adminjs-feathers",
 	"description": "An adapter to connect AdminJS to FeathersJS",
@@ -9,7 +9,7 @@
 	"types": "src/index",
 	"files": [
 		"/dist",
-	  	"/src"
+		"/src"
 	],
 	"repository": {
 		"type": "git",
@@ -40,6 +40,7 @@
 	"devDependencies": {
 		"@feathersjs/feathers": "5.0.0-pre.34",
 		"@feathersjs/typebox": "5.0.0-pre.34",
+		"@feathersjs/errors": "5.0.0-pre.34",
 		"adminjs": "^6.7.2",
 		"prettier": "^2.8.1",
 		"rimraf": "^3.0.2",
