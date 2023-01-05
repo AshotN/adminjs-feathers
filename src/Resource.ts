@@ -1,8 +1,8 @@
 import {
+	ActionContext,
 	AppError,
 	BaseRecord,
 	BaseResource,
-	CurrentAdmin,
 	Filter,
 	flat,
 	NotFoundError,
@@ -63,14 +63,14 @@ export class Resource extends BaseResource {
 
 	public async count(
 		filter: Filter,
-		currentAdmin?: CurrentAdmin
+		context?: ActionContext
 	): Promise<number> {
 		const featherFilter = convertFilters(filter)
 
 		const count = await this.service.find({
 			query: { $limit: 0, ...featherFilter },
 			provider: 'adminJS',
-			...(currentAdmin?.feathers ?? { authenticated: true }),
+			...(context?.currentAdmin?.feathers ?? { authenticated: true }),
 		})
 		this.idName()
 		return count.total
@@ -83,7 +83,7 @@ export class Resource extends BaseResource {
 			offset?: number
 			sort?: { sortBy?: string; direction?: 'asc' | 'desc' }
 		},
-		currentAdmin?: CurrentAdmin
+		context?: ActionContext
 	): Promise<Array<BaseRecord>> {
 		const { limit = 10, offset = 0, sort = {} } = params
 		const { direction, sortBy } = sort
@@ -100,7 +100,7 @@ export class Resource extends BaseResource {
 				...featherSort,
 			},
 			provider: 'adminJS',
-			...(currentAdmin?.feathers ?? { authenticated: true }),
+			...(context?.currentAdmin?.feathers ?? { authenticated: true }),
 		})
 
 		return instances.data.map((instance: any) => {
@@ -110,22 +110,22 @@ export class Resource extends BaseResource {
 
 	public async findOne(
 		id: string | number,
-		currentAdmin?: CurrentAdmin
+		context?: ActionContext
 	): Promise<BaseRecord | null> {
 		const instance = await this.service.get(id, {
 			provider: 'adminJS',
-			...(currentAdmin?.feathers ?? { authenticated: true }),
+			...(context?.currentAdmin?.feathers ?? { authenticated: true }),
 		})
 		return new BaseRecord(instance, this)
 	}
 
 	public async findMany(
 		ids: Array<string | number>,
-		currentAdmin?: CurrentAdmin
+		context?: ActionContext
 	): Promise<Array<BaseRecord>> {
 		const instances = await this.service.find(ids, {
 			provider: 'adminJS',
-			...(currentAdmin?.feathers ?? { authenticated: true }),
+			...(context?.currentAdmin?.feathers ?? { authenticated: true }),
 		})
 		return instances.data.map(
 			(instance: any) => new BaseRecord(instance, this)
@@ -134,14 +134,14 @@ export class Resource extends BaseResource {
 
 	public async create(
 		params: Record<string, any>,
-		currentAdmin?: CurrentAdmin
+		context?: ActionContext
 	): Promise<ParamsType> {
 		const createData = prepareForSend(params, this.schema)
 
 		return this.service
 			.create(createData, {
 				provider: 'adminJS',
-				...(currentAdmin?.feathers ?? { authenticated: true }),
+				...(context?.currentAdmin?.feathers ?? { authenticated: true }),
 			})
 			.catch((e: unknown) => {
 				if (e instanceof BadRequest) {
@@ -154,9 +154,9 @@ export class Resource extends BaseResource {
 	public async update(
 		pk: string | number,
 		params: any = {},
-		currentAdmin?: CurrentAdmin
+		context?: ActionContext
 	): Promise<ParamsType> {
-		const instance = await this.findOne(pk, currentAdmin)
+		const instance = await this.findOne(pk, context)
 		if (!instance) throw new NotFoundError('Instance not found.', 'update')
 
 		const preparedParams = flat.unflatten<any, any>(
@@ -192,15 +192,15 @@ export class Resource extends BaseResource {
 
 	public async delete(
 		pk: string | number,
-		currentAdmin?: CurrentAdmin
+		context?: ActionContext
 	): Promise<any> {
-		const item = await this.findOne(pk, currentAdmin)
+		const item = await this.findOne(pk, context)
 		if (!item)
 			throw new NotFoundError('Failed to find item to delete', 'delete')
 		await this.service
 			.remove(pk, {
 				provider: 'adminJS',
-				...(currentAdmin?.feathers ?? { authenticated: true }),
+				...(context?.currentAdmin?.feathers ?? { authenticated: true }),
 			})
 			.catch(() => {
 				throw new AppError('Failed to delete: ' + pk)
