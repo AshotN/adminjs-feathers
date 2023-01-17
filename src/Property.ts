@@ -1,25 +1,29 @@
 import { BaseProperty, PropertyType } from 'adminjs'
-import { TObject } from '@feathersjs/typebox'
+
+type PropertyOptions = {
+	required: boolean
+	idName: string
+}
 
 export class Property extends BaseProperty {
 	public column: any
-	public schema: TObject
+	public options: PropertyOptions
 
 	constructor({
 		column,
 		columnPosition,
-		schema,
+		options,
 	}: {
 		column: any
 		columnPosition: number
-		schema: TObject
+		options: PropertyOptions
 	}) {
 		const path = column.propertyPath
-		const isId = column.propertyPath === 'id'
+		const isId = column.propertyPath === options.idName
 
 		super({ path, isId, position: columnPosition })
 		this.column = column
-		this.schema = schema
+		this.options = options
 	}
 
 	public isEditable(): boolean {
@@ -29,10 +33,6 @@ export class Property extends BaseProperty {
 			!this.column.isUpdateDate
 		)
 	}
-
-	// public isId(): boolean {
-	//   return this.column.propertyPath === 'id'
-	// }
 
 	public isSortable(): boolean {
 		return this.type() !== 'reference'
@@ -101,11 +101,6 @@ export class Property extends BaseProperty {
 	}
 
 	public isRequired(): boolean {
-		if (
-			this.schema.properties[this.column.propertyPath].default !==
-			undefined
-		)
-			return false
-		return this.schema.required?.includes(this.column.propertyPath) ?? false
+		return this.options.required
 	}
 }

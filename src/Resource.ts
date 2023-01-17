@@ -16,11 +16,12 @@ import { prepareForSend } from './utils/featherParse'
 import { SupportedDatabasesType } from 'adminjs/src/backend/adapters/resource/supported-databases.type'
 import { BadRequest } from '@feathersjs/errors'
 import { parseValidationError } from './utils/parseValidationError'
+import { FeathersService } from '@feathersjs/feathers'
 
 type ParamsType = Record<string, any>
 
 export class Resource extends BaseResource {
-	private service: any
+	private service: FeathersService
 	private schema: TObject
 
 	private propsObject: Record<string, Property> = {}
@@ -42,15 +43,17 @@ export class Resource extends BaseResource {
 	}
 
 	public name(): string {
-		return this.service.table
+		//@ts-ignore
+		return this.service.options.name
 	}
 
 	public id(): string {
-		return this.service.table
+		//@ts-ignore
+		return this.service.options.name
 	}
 
 	public idName(): string {
-		return Object.keys(this.schema.properties)[0]
+		return this.service.id ?? Object.keys(this.schema.properties)[0]
 	}
 
 	public properties(): Array<Property> {
@@ -72,7 +75,6 @@ export class Resource extends BaseResource {
 			provider: 'adminJS',
 			...(context?.currentAdmin?.feathers ?? { authenticated: true }),
 		})
-		this.idName()
 		return count.total
 	}
 
@@ -123,7 +125,8 @@ export class Resource extends BaseResource {
 		ids: Array<string | number>,
 		context?: ActionContext
 	): Promise<Array<BaseRecord>> {
-		const instances = await this.service.find(ids, {
+		const instances = await this.service.find({
+			query: { [this.idName()]: { $in: ids } },
 			provider: 'adminJS',
 			...(context?.currentAdmin?.feathers ?? { authenticated: true }),
 		})
@@ -209,13 +212,17 @@ export class Resource extends BaseResource {
 
 	private prepareProps(): Record<string, Property> {
 		const props = this.schema.properties
+		const requiredKeys = this.schema.required ?? []
 		const keys = Object.keys(props)
 		return keys.reduce((acc, k, index) => {
 			const column = { ...props[k], propertyPath: k }
 			const property = new Property({
 				column,
 				columnPosition: index,
-				schema: this.schema,
+				options: {
+					required: requiredKeys.includes(column.propertyPath),
+					idName: this.idName(),
+				},
 			})
 			const path = property.path()
 			acc[path] = property
