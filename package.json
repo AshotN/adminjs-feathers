@@ -1,6 +1,6 @@
 {
 	"name": "adminjs-feathers",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"module": "true",
 	"homepage": "https://github.com/AshotN/adminjs-feathers",
 	"description": "An adapter to connect AdminJS to FeathersJS",

@@ -183,12 +183,19 @@ export class Resource extends BaseResource {
 		}, {} as Record<string, any>)
 
 		if (Object.keys(changes).length > 0) {
-			await this.service.patch(pk, changes).catch((e: unknown) => {
-				if (e instanceof BadRequest) {
-					throw new ValidationError(parseValidationError(e))
-				}
-				throw e
-			})
+			await this.service
+				.patch(pk, changes, {
+					provider: 'adminJS',
+					...(context?.currentAdmin?.feathers ?? {
+						authenticated: true,
+					}),
+				})
+				.catch((e: unknown) => {
+					if (e instanceof BadRequest) {
+						throw new ValidationError(parseValidationError(e))
+					}
+					throw e
+				})
 		}
 		return preparedParams
 	}
