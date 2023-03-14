@@ -35,7 +35,7 @@ export class Resource extends BaseResource {
 	}
 
 	public databaseName(): string {
-		return 'FeatherJS'
+		return 'FeathersJS'
 	}
 
 	public databaseType(): SupportedDatabasesType {
