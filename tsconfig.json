@@ -6,7 +6,8 @@
 		"rootDir": "src",
 		"outDir": "dist",
 		"sourceMap": true,
-		"declaration": true
+		"declaration": true,
+		"skipLibCheck": true
 	},
 	"exclude": ["node_modules"]
 }
