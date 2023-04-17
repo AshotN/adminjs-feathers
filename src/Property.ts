@@ -47,9 +47,12 @@ export class Property extends BaseProperty {
 	}
 
 	public availableValues(): Array<any> | null {
-		const values = this.column.anyOf
-		if (values) {
-			return values.map((val: any) => val.const)
+		const values: Array<{ type: 'string'; const: string }> =
+			this.column.anyOf?.filter(
+				(v: any) => v.type === 'string' && v.const
+			)
+		if (values && values.length > 0) {
+			return values.map((val) => val.const)
 		}
 		return null
 	}

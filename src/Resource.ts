@@ -10,7 +10,7 @@ import {
 } from 'adminjs'
 
 import { Property } from './Property'
-import { TObject } from '@feathersjs/typebox'
+import { TObject, TSchema } from '@feathersjs/typebox'
 import { convertFilters } from './utils/featherFilter'
 import { prepareForSend } from './utils/featherParse'
 import { SupportedDatabasesType } from 'adminjs/src/backend/adapters/resource/supported-databases.type'
@@ -21,8 +21,8 @@ import { FeathersService } from '@feathersjs/feathers'
 type ParamsType = Record<string, any>
 
 export class Resource extends BaseResource {
-	private service: FeathersService
-	private schema: TObject
+	public service: FeathersService
+	public schema: TObject<Record<string, TSchema & { nullable?: boolean }>>
 
 	private propsObject: Record<string, Property> = {}
 
@@ -148,7 +148,11 @@ export class Resource extends BaseResource {
 			})
 			.catch((e: unknown) => {
 				if (e instanceof BadRequest) {
-					throw new ValidationError(parseValidationError(e))
+					if (e.data)
+						throw new ValidationError(parseValidationError(e))
+				}
+				if (e instanceof Error) {
+					throw new AppError(e.message)
 				}
 				throw e
 			})
@@ -171,7 +175,11 @@ export class Resource extends BaseResource {
 
 			const options =
 				context?.resource._decorated?.options.properties?.[key]
-			if (options?.custom?.dontSend) return acc
+			if (
+				typeof options?.isVisible === 'object' &&
+				options.isVisible.edit === false
+			)
+				return acc
 			//Comparison does not compare object values, so objects are always !==
 			if (oldVal !== newVal) {
 				//If the oldVal is a Date and the new one is not, this means it wasn't edited.
@@ -195,7 +203,11 @@ export class Resource extends BaseResource {
 				})
 				.catch((e: unknown) => {
 					if (e instanceof BadRequest) {
-						throw new ValidationError(parseValidationError(e))
+						if (e.data)
+							throw new ValidationError(parseValidationError(e))
+					}
+					if (e instanceof Error) {
+						throw new AppError(e.message)
 					}
 					throw e
 				})
@@ -230,7 +242,9 @@ export class Resource extends BaseResource {
 				column,
 				columnPosition: index,
 				options: {
-					required: requiredKeys.includes(column.propertyPath),
+					required:
+						!column.nullable &&
+						requiredKeys.includes(column.propertyPath),
 					idName: this.idName(),
 				},
 			})
