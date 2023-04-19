@@ -1,11 +1,10 @@
 {
 	"compilerOptions": {
-		"module": "ESNext",
-		"target": "ESNext",
-		"moduleResolution": "Node",
+		"module": "commonjs",
+		"target": "ES2017",
 		"esModuleInterop": true,
 		"rootDir": "src",
-		"outDir": "dist/ESM",
+		"outDir": "dist/CJS",
 		"sourceMap": true,
 		"declaration": true,
 		"skipLibCheck": true
