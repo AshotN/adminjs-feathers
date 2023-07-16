@@ -1,4 +1,4 @@
-import { TObject, TProperties } from '@feathersjs/typebox'
+import { TObject } from '@feathersjs/typebox'
 
 const parseByType = (val: any, metadata?: { format: string; type: string }) => {
 	if (metadata?.format === 'date') {
@@ -10,11 +10,10 @@ const parseByType = (val: any, metadata?: { format: string; type: string }) => {
 
 export const prepareForSend = (
 	params: Record<string, any>,
-	schema: TObject<TProperties>
+	schema: TObject<any>
 ) => {
 	return Object.keys(params).reduce((acc, key) => {
 		const type = schema.properties[key]
-		//@ts-ignore
 		acc[key] = parseByType(params[key], type)
 		return acc
 	}, {} as Record<string, any>)

@@ -27,11 +27,7 @@ export class Property extends BaseProperty {
 	}
 
 	public isEditable(): boolean {
-		return (
-			!this.isId() &&
-			!this.column.isCreateDate &&
-			!this.column.isUpdateDate
-		)
+		return !this.isId()
 	}
 
 	public isSortable(): boolean {
@@ -43,7 +39,13 @@ export class Property extends BaseProperty {
 		if (this.column.type === 'array') {
 			if (this.column.items.$ref) return this.column.items.$ref
 		}
-		return ref?.toLowerCase() ?? this.column.$schema ?? null
+		if (this.column.anyOf) {
+			const schema = this.column.anyOf.find((v: any) => v.$schema)
+			if (schema) {
+				return schema.$schema.toLowerCase()
+			}
+		}
+		return ref?.toLowerCase() ?? this.column.$schema?.toLowerCase() ?? null
 	}
 
 	public availableValues(): Array<any> | null {
@@ -84,7 +86,7 @@ export class Property extends BaseProperty {
 		}
 
 		if (this.reference()) {
-			type = 'reference'
+			return 'reference'
 		}
 
 		//Enum
@@ -93,7 +95,9 @@ export class Property extends BaseProperty {
 		}
 
 		if (!type) {
-			console.warn(`Unhandled type: ${this.column.type}`)
+			console.warn(
+				`Unhandled type: ${this.column.type} - ${this.column.propertyPath}`
+			)
 		}
 
 		return type ?? 'string'

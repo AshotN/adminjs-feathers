@@ -10,7 +10,7 @@ import {
 } from 'adminjs'
 
 import { Property } from './Property'
-import { TObject, TSchema } from '@feathersjs/typebox'
+import { TObject } from '@feathersjs/typebox'
 import { convertFilters } from './utils/featherFilter'
 import { prepareForSend } from './utils/featherParse'
 import { SupportedDatabasesType } from 'adminjs/src/backend/adapters/resource/supported-databases.type'
@@ -22,7 +22,7 @@ type ParamsType = Record<string, any>
 
 export class Resource extends BaseResource {
 	public service: FeathersService
-	public schema: TObject<Record<string, TSchema & { nullable?: boolean }>>
+	public schema: TObject<any>
 
 	private propsObject: Record<string, Property> = {}
 
@@ -243,6 +243,9 @@ export class Resource extends BaseResource {
 				columnPosition: index,
 				options: {
 					required:
+						!column.anyOf?.some(
+							(val: any) => val.type === 'null'
+						) &&
 						!column.nullable &&
 						requiredKeys.includes(column.propertyPath),
 					idName: this.idName(),
