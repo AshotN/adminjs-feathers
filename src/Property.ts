@@ -27,7 +27,7 @@ export class Property extends BaseProperty {
 	}
 
 	public isEditable(): boolean {
-		return !this.isId()
+		return !this.isId() && !this.column.readOnly
 	}
 
 	public isSortable(): boolean {
