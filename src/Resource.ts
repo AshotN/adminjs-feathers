@@ -260,13 +260,17 @@ export class Resource extends BaseResource {
 
 	/** Converts params from string to final type */
 	private prepareParams(params: Record<string, any>): Record<string, any> {
-		const preparedParams: Record<string, any> = { ...params }
+		const preparedParams: Record<string, any> = {}
 
 		this.properties().forEach((property) => {
-			const param = flat.get(preparedParams, property.path())
+			const param = flat.get(params, property.path())
 			const key = property.path()
 
 			if (param === undefined || param === null) {
+				return
+			}
+
+			if (!property.isEditable()) {
 				return
 			}
 
@@ -295,6 +299,8 @@ export class Resource extends BaseResource {
 					  }
 					: id
 			}
+
+			preparedParams[key] = param
 		})
 
 		return preparedParams

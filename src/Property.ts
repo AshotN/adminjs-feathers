@@ -27,6 +27,14 @@ export class Property extends BaseProperty {
 	}
 
 	public isEditable(): boolean {
+		if (
+			this.path().toLowerCase() === 'created_at' ||
+			this.path().toLowerCase() === 'createdat' ||
+			this.path().toLowerCase() === 'updated_at' ||
+			this.path().toLowerCase() === 'updatedat'
+		) {
+			return false
+		}
 		return !this.isId() && !this.column.readOnly
 	}
 
