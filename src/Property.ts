@@ -74,22 +74,30 @@ export class Property extends BaseProperty {
 	public type(): PropertyType {
 		let type: PropertyType | undefined
 
-		if (this.column.type === 'number') {
+		let column = this.column
+
+		if (this.column.anyOf) {
+			const withoutNull = this.column.anyOf.filter(
+				(val: { type: string }) => val.type !== 'null'
+			)
+			if (withoutNull.length === 1) {
+				column = withoutNull[0]
+			}
+		}
+
+		if (column.type === 'number') {
 			type = 'number'
 		}
-		if (this.column.type === 'string') {
+		if (column.type === 'string') {
 			type = 'string'
 		}
-		if (this.column.format === 'date') {
+		if (column.format === 'date') {
 			type = 'date'
 		}
-		if (
-			this.column.format === 'date-time' ||
-			this.column.instanceOf === 'Date'
-		) {
+		if (column.format === 'date-time' || column.instanceOf === 'Date') {
 			type = 'datetime'
 		}
-		if (this.column.type === 'boolean') {
+		if (column.type === 'boolean') {
 			type = 'boolean'
 		}
 
@@ -98,13 +106,13 @@ export class Property extends BaseProperty {
 		}
 
 		//Enum
-		if (this.column.anyOf) {
+		if (column.anyOf) {
 			type = 'string'
 		}
 
 		if (!type) {
 			console.warn(
-				`Unhandled type: ${this.column.type} - ${this.column.propertyPath}`
+				`Unhandled type: ${column.type} - ${column.propertyPath}`
 			)
 		}
 
