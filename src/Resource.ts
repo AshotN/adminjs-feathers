@@ -43,13 +43,11 @@ export class Resource extends BaseResource {
 	}
 
 	public name(): string {
-		//@ts-ignore
-		return this.service.options.name
+		return this.schema.$id.toLowerCase()
 	}
 
 	public id(): string {
-		//@ts-ignore
-		return this.service.options.name
+		return this.schema.$id.toLowerCase()
 	}
 
 	public idName(): string {

@@ -45,7 +45,9 @@ export class Property extends BaseProperty {
 	public reference(): string | null {
 		const ref: string | undefined = this.column.$ref
 		if (this.column.type === 'array') {
-			if (this.column.items.$ref) return this.column.items.$ref
+			if (this.column.items.$ref) {
+				return this.column.items.$ref.toLowerCase()
+			}
 		}
 		if (this.column.anyOf) {
 			const schema = this.column.anyOf.find((v: any) => v.$schema)
