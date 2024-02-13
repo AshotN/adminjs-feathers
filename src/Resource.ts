@@ -171,13 +171,6 @@ export class Resource extends BaseResource {
 			const oldVal = instance.get(key)
 			const newVal = preparedParams[key]
 
-			const options =
-				context?.resource._decorated?.options.properties?.[key]
-			if (
-				typeof options?.isVisible === 'object' &&
-				options.isVisible.edit === false
-			)
-				return acc
 			//Comparison does not compare object values, so objects are always !==
 			if (oldVal !== newVal) {
 				//If the oldVal is a Date and the new one is not, this means it wasn't edited.

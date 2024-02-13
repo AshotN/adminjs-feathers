@@ -59,6 +59,8 @@ export class Property extends BaseProperty {
 	}
 
 	public availableValues(): Array<any> | null {
+		if (this.column.enum) return this.column.enum
+
 		const values: Array<{ type: 'string'; const: string }> =
 			this.column.anyOf?.filter(
 				(v: any) => v.type === 'string' && v.const
@@ -105,11 +107,6 @@ export class Property extends BaseProperty {
 
 		if (this.reference()) {
 			return 'reference'
-		}
-
-		//Enum
-		if (column.anyOf) {
-			type = 'string'
 		}
 
 		if (!type) {
