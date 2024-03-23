@@ -104,6 +104,18 @@ export class Property extends BaseProperty {
 		if (column.type === 'boolean') {
 			type = 'boolean'
 		}
+		if (column.type === 'object') {
+			type = 'key-value'
+		}
+
+		//Enum
+		if (column.anyOf || this.column.enum) {
+			type = 'string'
+		}
+
+		if (column.type === 'array') {
+			type = 'string'
+		}
 
 		if (this.reference()) {
 			return 'reference'

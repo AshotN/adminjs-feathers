@@ -4,3 +4,4 @@ lib/
 dist/
 .idea
 *yalc*
+src/*.js
