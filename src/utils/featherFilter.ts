@@ -1,15 +1,7 @@
 import { Filter } from 'adminjs'
 import { Property } from '../Property'
+import { isBool, isEnum, isUUID } from './utils'
 
-const isBool = (val: string) => val === 'true' || val === 'false'
-const isUUID = (val: string) =>
-	val.match(
-		/^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
-	)
-
-const isEnum = (property: Property) => {
-	return !!property.column.anyOf
-}
 export const convertFilters = (filter: Filter) => {
 	return filter.reduce((acc, f) => {
 		if (typeof f.value !== 'string' || f.value === 'undefined') return acc
@@ -25,7 +17,7 @@ export const convertFilters = (filter: Filter) => {
 			acc[f.path] = f.value
 			return acc
 		}
-		if (isEnum(f.property as Property)) {
+		if (isEnum((f.property as Property).column)) {
 			acc[f.path] = f.value
 			return acc
 		}

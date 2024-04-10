@@ -1,4 +1,5 @@
 import { BaseProperty, PropertyType } from 'adminjs'
+import { isEnum } from './utils/utils'
 
 type PropertyOptions = {
 	required: boolean
@@ -109,7 +110,7 @@ export class Property extends BaseProperty {
 		}
 
 		//Enum
-		if (column.anyOf || this.column.enum) {
+		if (isEnum(column)) {
 			type = 'string'
 		}
 
