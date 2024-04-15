@@ -1,5 +1,5 @@
 import { BaseProperty, PropertyType } from 'adminjs'
-import { isEnum } from './utils/utils'
+import { isEnum, stripNullable } from './utils/utils'
 
 type PropertyOptions = {
 	required: boolean
@@ -23,7 +23,7 @@ export class Property extends BaseProperty {
 		const isId = column.propertyPath === options.idName
 
 		super({ path, isId, position: columnPosition })
-		this.column = column
+		this.column = stripNullable(column)
 		this.options = options
 	}
 
@@ -44,19 +44,20 @@ export class Property extends BaseProperty {
 	}
 
 	public reference(): string | null {
-		const ref: string | undefined = this.column.$ref
-		if (this.column.type === 'array') {
-			if (this.column.items.$ref) {
-				return this.column.items.$ref.toLowerCase()
+		const column = this.column
+
+		if (column.type === 'array') {
+			if (column.items.$schema) {
+				return column.items.$schema.toLowerCase()
 			}
 		}
-		if (this.column.anyOf) {
-			const schema = this.column.anyOf.find((v: any) => v.$schema)
+		if (column.anyOf) {
+			const schema = column.anyOf.find((v: any) => v.$schema)
 			if (schema) {
 				return schema.$schema.toLowerCase()
 			}
 		}
-		return ref?.toLowerCase() ?? this.column.$schema?.toLowerCase() ?? null
+		return column.$schema?.toLowerCase() ?? null
 	}
 
 	public availableValues(): Array<any> | null {
@@ -71,10 +72,6 @@ export class Property extends BaseProperty {
 		}
 		return null
 	}
-
-	// public position(): number {
-	//   return this.columnPosition || 0
-	// }
 
 	public type(): PropertyType {
 		let type: PropertyType | undefined
@@ -91,47 +88,58 @@ export class Property extends BaseProperty {
 		}
 
 		if (column.type === 'number') {
-			type = 'number'
+			return 'number'
 		}
-		if (column.type === 'string') {
-			type = 'string'
+
+		if (column.format === 'date-time' || column.instanceOf === 'Date') {
+			return 'datetime'
 		}
 		if (column.format === 'date') {
-			type = 'date'
-		}
-		if (column.format === 'date-time' || column.instanceOf === 'Date') {
-			type = 'datetime'
+			return 'date'
 		}
 		if (column.type === 'boolean') {
-			type = 'boolean'
-		}
-		if (column.type === 'object') {
-			type = 'key-value'
+			return 'boolean'
 		}
 
 		//Enum
 		if (isEnum(column)) {
-			type = 'string'
+			return 'string'
 		}
 
-		if (column.type === 'array') {
-			type = 'string'
+		if (column.type === 'object' || column.$ref || column.items?.$ref) {
+			return 'key-value'
 		}
 
 		if (this.reference()) {
 			return 'reference'
 		}
 
+		if (column.type === 'array') {
+			return column.items.type || 'string'
+		}
+
+		if (column.type === 'string') {
+			return 'string'
+		}
+
 		if (!type) {
 			console.warn(
-				`Unhandled type: ${column.type} - ${column.propertyPath}`
+				`Unhandled column: ${JSON.stringify(column, null, '\t')}`
 			)
 		}
 
-		return type ?? 'string'
+		return 'string'
 	}
 
 	public isArray(): boolean {
+		if (this.column.anyOf) {
+			const withoutNull = this.column.anyOf.filter(
+				(val: { type: string }) => val.type !== 'null'
+			)
+			if (withoutNull.length === 1) {
+				return withoutNull[0].type === 'array'
+			}
+		}
 		return this.column.type === 'array'
 	}
 

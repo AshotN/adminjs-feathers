@@ -6,3 +6,16 @@ export const isUUID = (val: string) =>
 export const isEnum = (column: any) => {
 	return !!column.anyOf || column.enum
 }
+
+export const stripNullable = (column: any) => {
+	if (column.anyOf) {
+		const withoutNull = column.anyOf.filter(
+			(val: { type: string }) => val.type !== 'null'
+		)
+		if (withoutNull.length === 1) {
+			const { anyOf, ...rest } = column
+			return { ...rest, ...withoutNull[0] }
+		}
+	}
+	return column
+}

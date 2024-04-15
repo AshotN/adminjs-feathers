@@ -13,37 +13,49 @@ import { Property } from './Property'
 import { TObject } from '@feathersjs/typebox'
 import { convertFilters } from './utils/featherFilter'
 import { prepareForSend } from './utils/featherParse'
-import { SupportedDatabasesType } from 'adminjs/src/backend/adapters/resource/supported-databases.type'
+import { SupportedDatabasesType } from 'adminjs'
 import { BadRequest } from '@feathersjs/errors'
 import { parseValidationError } from './utils/parseValidationError'
 import { FeathersService } from '@feathersjs/feathers'
+import { AdminJSFeathersGlobalOptions } from './globalOptions'
+import { AdminJSFeathersOptions } from './types'
 
 type ParamsType = Record<string, any>
 
 export class Resource extends BaseResource {
-	public service: FeathersService
-	public schema: TObject<any>
+	private service: FeathersService
+	private schema: TObject<any>
+	private options: AdminJSFeathersOptions
 
 	private propsObject: Record<string, Property> = {}
 
-	constructor({ service, schema }: { service: any; schema: TObject }) {
+	constructor({
+		service,
+		schema,
+		options,
+	}: {
+		service: any
+		schema: TObject
+		options: AdminJSFeathersOptions
+	}) {
 		super(service)
 
 		this.service = service
 		this.schema = schema
+		this.options = {
+			...AdminJSFeathersGlobalOptions.options,
+			...options,
+		}
+
 		this.propsObject = this.prepareProps()
 	}
 
 	public databaseName(): string {
-		return 'FeathersJS'
+		return this.options.databaseName
 	}
 
 	public databaseType(): SupportedDatabasesType {
 		return 'other'
-	}
-
-	public name(): string {
-		return this.schema.$id.toLowerCase()
 	}
 
 	public id(): string {
@@ -55,7 +67,7 @@ export class Resource extends BaseResource {
 	}
 
 	public properties(): Array<Property> {
-		return [...Object.values(this.propsObject)]
+		return Object.values(this.propsObject)
 	}
 
 	public property(path: string): Property {
@@ -70,7 +82,7 @@ export class Resource extends BaseResource {
 
 		const count = await this.service.find({
 			query: { $limit: 0, ...featherFilter },
-			provider: 'adminJS',
+			provider: this.options.provider,
 			...(context?.currentAdmin?.feathers ?? { authenticated: true }),
 		})
 		return count.total
@@ -99,7 +111,7 @@ export class Resource extends BaseResource {
 				...featherFilter,
 				...featherSort,
 			},
-			provider: 'adminJS',
+			provider: this.options.provider,
 			...(context?.currentAdmin?.feathers ?? { authenticated: true }),
 		})
 
@@ -113,7 +125,7 @@ export class Resource extends BaseResource {
 		context?: ActionContext
 	): Promise<BaseRecord | null> {
 		const instance = await this.service.get(id, {
-			provider: 'adminJS',
+			provider: this.options.provider,
 			...(context?.currentAdmin?.feathers ?? { authenticated: true }),
 		})
 		return new BaseRecord(instance, this)
@@ -125,7 +137,7 @@ export class Resource extends BaseResource {
 	): Promise<Array<BaseRecord>> {
 		const instances = await this.service.find({
 			query: { [this.idName()]: { $in: ids } },
-			provider: 'adminJS',
+			provider: this.options.provider,
 			...(context?.currentAdmin?.feathers ?? { authenticated: true }),
 		})
 		return instances.data.map(
@@ -137,11 +149,14 @@ export class Resource extends BaseResource {
 		params: Record<string, any>,
 		context?: ActionContext
 	): Promise<ParamsType> {
-		const createData = prepareForSend(params, this.schema)
+		const preparedParams = flat.unflatten<any, any>(
+			this.prepareParams(params)
+		)
+		const createData = prepareForSend(preparedParams, this.schema)
 
 		return this.service
 			.create(createData, {
-				provider: 'adminJS',
+				provider: this.options.provider,
 				...(context?.currentAdmin?.feathers ?? { authenticated: true }),
 			})
 			.catch((e: unknown) => {
@@ -158,7 +173,7 @@ export class Resource extends BaseResource {
 
 	public async update(
 		pk: string | number,
-		params: any = {},
+		params: Record<string, any> = {},
 		context?: ActionContext
 	): Promise<ParamsType> {
 		const instance = await this.findOne(pk, context)
@@ -167,27 +182,42 @@ export class Resource extends BaseResource {
 		const preparedParams = flat.unflatten<any, any>(
 			this.prepareParams(params)
 		)
-		const changes = Object.keys(preparedParams).reduce((acc, key) => {
-			const oldVal = instance.get(key)
-			const newVal = preparedParams[key]
+		const changes = Object.keys(preparedParams).reduce(
+			(acc, key) => {
+				const oldVal = instance.get(key)
+				const newVal = preparedParams[key]
 
-			//Comparison does not compare object values, so objects are always !==
-			if (oldVal !== newVal) {
-				//If the oldVal is a Date and the new one is not, this means it wasn't edited.
-				//An edited date comes to us as a Date object, in which case we compare the underlying time
-				if (oldVal instanceof Date) {
-					if (!(newVal instanceof Date)) return acc
-					if (oldVal.getTime() === newVal.getTime()) return acc
+				//Comparison does not compare object values, so objects are always !==
+				if (oldVal !== newVal) {
+					//If the oldVal is a Date and the new one is not, this means it wasn't edited.
+					//An edited date comes to us as a Date object, in which case we compare the underlying time
+					if (oldVal instanceof Date) {
+						if (!(newVal instanceof Date)) return acc
+						if (oldVal.getTime() === newVal.getTime()) return acc
+					}
+
+					if (
+						Array.isArray(oldVal) &&
+						Array.isArray(newVal) &&
+						JSON.stringify(oldVal) === JSON.stringify(newVal)
+					) {
+						return acc
+					}
+
+					acc[key] = preparedParams[key]
 				}
-				acc[key] = preparedParams[key]
-			}
-			return acc
-		}, {} as Record<string, any>)
+
+				return acc
+			},
+			{} as Record<string, any>
+		)
 
 		if (Object.keys(changes).length > 0) {
+			const updateData = prepareForSend(changes, this.schema)
+
 			await this.service
-				.patch(pk, changes, {
-					provider: 'adminJS',
+				.patch(pk, updateData, {
+					provider: this.options.provider,
 					...(context?.currentAdmin?.feathers ?? {
 						authenticated: true,
 					}),
@@ -215,7 +245,7 @@ export class Resource extends BaseResource {
 			throw new NotFoundError('Failed to find item to delete', 'delete')
 		await this.service
 			.remove(pk, {
-				provider: 'adminJS',
+				provider: this.options.provider,
 				...(context?.currentAdmin?.feathers ?? { authenticated: true }),
 			})
 			.catch(() => {
@@ -227,26 +257,35 @@ export class Resource extends BaseResource {
 		const props = this.schema.properties
 		const requiredKeys = this.schema.required ?? []
 		const keys = Object.keys(props)
-		return keys.reduce((acc, k, index) => {
-			const column = { ...props[k], propertyPath: k }
-			const property = new Property({
-				column,
-				columnPosition: index,
-				options: {
-					required:
-						!column.anyOf?.some(
-							(val: any) => val.type === 'null'
-						) &&
-						!column.nullable &&
-						requiredKeys.includes(column.propertyPath),
-					idName: this.idName(),
-				},
-			})
-			const path = property.path()
-			acc[path] = property
+		return keys.reduce(
+			(acc, k, index) => {
+				const column = { ...props[k], propertyPath: k }
+				const nullable =
+					this.options.treatNullableAsOptional &&
+					column.anyOf?.some(
+						(val: { type: string }) => val.type === 'null'
+					)
+				const defaultAvailable =
+					this.options.applyDefaults && column.default
 
-			return acc
-		}, {} as Record<string, Property>)
+				const property = new Property({
+					column,
+					columnPosition: index,
+					options: {
+						required:
+							requiredKeys.includes(column.propertyPath) &&
+							!nullable &&
+							!defaultAvailable,
+						idName: this.idName(),
+					},
+				})
+				const path = property.path()
+				acc[path] = property
+
+				return acc
+			},
+			{} as Record<string, Property>
+		)
 	}
 
 	/** Converts params from string to final type */
@@ -257,11 +296,17 @@ export class Resource extends BaseResource {
 			const param = flat.get(params, property.path())
 			const key = property.path()
 
-			if (param === undefined || param === null) {
+			if (!property.isEditable()) {
 				return
 			}
 
-			if (!property.isEditable()) {
+			if (param === undefined || param === null) {
+				if (
+					property.column.default !== undefined &&
+					this.options.applyDefaults
+				) {
+					preparedParams[key] = property.column.default
+				}
 				return
 			}
 
@@ -287,7 +332,7 @@ export class Resource extends BaseResource {
 				preparedParams[ref] = foreignKey
 					? {
 							[foreignKey]: id,
-					  }
+						}
 					: id
 			}
 
