@@ -1,4 +1,5 @@
 import { TObject } from '@feathersjs/typebox'
+import { stripNullable } from './utils'
 
 const parseByType = (
 	val: any,
@@ -23,7 +24,7 @@ export const prepareForSend = (
 ) => {
 	return Object.keys(params).reduce(
 		(acc, key) => {
-			const type = schema.properties[key]
+			const type = stripNullable(schema.properties[key])
 			acc[key] = parseByType(params[key], type)
 			return acc
 		},
