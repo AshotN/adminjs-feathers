@@ -1,6 +1,6 @@
 {
 	"name": "adminjs-feathers",
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"homepage": "https://github.com/AshotN/adminjs-feathers",
 	"description": "An adapter to connect AdminJS to FeathersJS",
 	"license": "MIT",

@@ -19,6 +19,7 @@ import { parseValidationError } from './utils/parseValidationError'
 import { FeathersService } from '@feathersjs/feathers'
 import { AdminJSFeathersGlobalOptions } from './globalOptions'
 import { AdminJSFeathersOptions } from './types'
+import { isValidDate } from './utils/utils'
 
 type ParamsType = Record<string, any>
 
@@ -342,6 +343,8 @@ export class Resource extends BaseResource {
 						}
 					: id
 			}
+
+			if (type === 'date' && !isValidDate(preparedParams[key])) return
 
 			preparedParams[key] = param
 		})
