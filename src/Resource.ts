@@ -158,7 +158,7 @@ export class Resource extends BaseResource {
 		context?: ActionContext
 	): Promise<ParamsType> {
 		const preparedParams = flat.unflatten<any, any>(
-			this.prepareParams(params)
+			this.prepareParams(params, 'create')
 		)
 		const createData = prepareForSend(preparedParams, this.schema)
 
@@ -188,7 +188,7 @@ export class Resource extends BaseResource {
 		if (!instance) throw new NotFoundError('Instance not found.', 'update')
 
 		const preparedParams = flat.unflatten<any, any>(
-			this.prepareParams(params)
+			this.prepareParams(params, 'update')
 		)
 		const changes = Object.keys(preparedParams).reduce(
 			(acc, key) => {
@@ -297,7 +297,10 @@ export class Resource extends BaseResource {
 	}
 
 	/** Converts params from string to final type */
-	private prepareParams(params: Record<string, any>): Record<string, any> {
+	private prepareParams(
+		params: Record<string, any>,
+		actionType: 'create' | 'update'
+	): Record<string, any> {
 		const preparedParams: Record<string, any> = {}
 
 		this.properties().forEach((property) => {
@@ -310,6 +313,7 @@ export class Resource extends BaseResource {
 
 			if (param === undefined || param === null) {
 				if (
+					actionType === 'create' &&
 					property.column.default !== undefined &&
 					this.options.applyDefaults
 				) {
