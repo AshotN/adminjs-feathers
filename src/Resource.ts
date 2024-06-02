@@ -348,7 +348,7 @@ export class Resource extends BaseResource {
 					: id
 			}
 
-			if (type === 'date' && !isValidDate(preparedParams[key])) return
+			if (type === 'date' && !isValidDate(param)) return
 
 			preparedParams[key] = param
 		})
