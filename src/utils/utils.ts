@@ -19,3 +19,5 @@ export const stripNullable = (column: any) => {
 	}
 	return column
 }
+export const camelToSnakeCase = (str: string) =>
+	str.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()

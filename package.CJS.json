@@ -1,3 +1,4 @@
 {
-  "type": "commonjs"
+	"main": "dist/CJS/index.js",
+	"type": "commonjs"
 }

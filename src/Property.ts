@@ -1,5 +1,5 @@
 import { BaseProperty, PropertyType } from 'adminjs'
-import { isEnum, stripNullable } from './utils/utils'
+import { camelToSnakeCase, isEnum, stripNullable } from './utils/utils'
 
 type PropertyOptions = {
 	required: boolean
@@ -48,16 +48,19 @@ export class Property extends BaseProperty {
 
 		if (column.type === 'array') {
 			if (column.items.$schema) {
-				return column.items.$schema.toLowerCase()
+				return camelToSnakeCase(column.items.$schema).toLowerCase()
 			}
 		}
 		if (column.anyOf) {
 			const schema = column.anyOf.find((v: any) => v.$schema)
 			if (schema) {
-				return schema.$schema.toLowerCase()
+				return camelToSnakeCase(schema.$schema).toLowerCase()
 			}
 		}
-		return column.$schema?.toLowerCase() ?? null
+		if (column.$schema) {
+			return camelToSnakeCase(column.$schema).toLowerCase()
+		}
+		return null
 	}
 
 	public availableValues(): Array<any> | null {

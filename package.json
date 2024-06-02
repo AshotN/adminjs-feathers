@@ -1,10 +1,10 @@
 {
 	"name": "adminjs-feathers",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"homepage": "https://github.com/AshotN/adminjs-feathers",
 	"description": "An adapter to connect AdminJS to FeathersJS",
 	"license": "MIT",
-	"main": "dist/index",
+	"main": "dist/ESM/index.js",
 	"types": "src/index",
 	"type": "module",
 	"exports": {
