@@ -59,6 +59,13 @@ export class Resource extends BaseResource {
 	}
 
 	public id(): string {
+		if (
+			'fullName' in this.service &&
+			typeof this.service.fullName === 'string'
+		) {
+			return this.service.fullName
+		}
+
 		return this.schema.$id.toLowerCase()
 	}
 
