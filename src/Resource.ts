@@ -203,7 +203,14 @@ export class Resource extends BaseResource {
 						if (!(newVal instanceof Date)) return acc
 						if (oldVal.getTime() === newVal.getTime()) return acc
 					}
-
+					//If property is of type date, we expect this to be a string,
+					if (
+						(context.resource as Resource).schema.properties[key]
+							.format === 'date'
+					) {
+						if (oldVal === newVal.toISOString().slice(0, 10))
+							return acc
+					}
 					if (
 						Array.isArray(oldVal) &&
 						Array.isArray(newVal) &&
