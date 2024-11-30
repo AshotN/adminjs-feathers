@@ -15,6 +15,10 @@ const parseByType = (
 		}
 	}
 
+	if (typeof val === 'function') {
+		return undefined
+	}
+
 	return val
 }
 
